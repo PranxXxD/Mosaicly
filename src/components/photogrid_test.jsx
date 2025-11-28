@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, X, Smartphone, Layout, Image as ImageIcon, ArrowRight, ArrowLeft, Grid, Download, Loader, PaintBucket, Layers, SplitSquareHorizontal, Sparkles, Wand2, TowerControl, ImagePlusIcon } from 'lucide-react';
+import { Upload, X, Smartphone, Layout, Image as ImageIcon, ArrowRight, ArrowLeft, Grid, Download, Loader, PaintBucket, Layers, SplitSquareHorizontal, Sparkles, Wand2 } from 'lucide-react';
 
 const Photogrid = () => {
-  const apiKey = import.meta.env.VITE_API_KEY; // API Key injected at runtime
+  const apiKey = ""; // API Key injected at runtime
 
   // --- State ---
   const [images, setImages] = useState([
     "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&auto=format&fit=crop&q=60",
-    "http://images.unsplash.com/photo-1762764919450-560fd6515192?w=600&auto=format&fit=crop&q=60",
+    "https://images.unsplash.com/photo-1529139574466-a302d2052574?w=800&auto=format&fit=crop&q=60",
     "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=800&auto=format&fit=crop&q=60",
     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=60"
   ]);
@@ -404,7 +404,7 @@ const Photogrid = () => {
             <div className="w-8 h-8 bg-gradient-to-tr from-pink-500 to-purple-500 rounded-lg flex items-center justify-center">
               <Grid size={18} className="text-white" />
             </div>
-            <h1 className="text-xl font-bold tracking-tight">Mosaicly</h1>
+            <h1 className="text-xl font-bold tracking-tight">SCRL Simulator</h1>
           </div>
           
           <div className="flex gap-2">
@@ -441,16 +441,16 @@ const Photogrid = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
           
           {/* 1. Uploads */}
-          <div className="lg:col-span-3 col-span-2 bg-neutral-800/50 p-5 rounded-2xl border border-neutral-800 h-fit">
+          <div className="lg:col-span-3 bg-neutral-800/50 p-5 rounded-2xl border border-neutral-800 h-fit">
             <h2 className="text-sm uppercase tracking-wider text-neutral-400 font-semibold mb-4 flex items-center gap-2">
               <Upload size={14} /> 1. Photos
             </h2>
-            <div className="grid lg:grid-cols-2 grid-col-1 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {images.map((img, idx) => (
                 <div key={idx} className="group relative aspect-square bg-neutral-700 rounded-xl overflow-hidden border border-neutral-600 transition-all hover:border-neutral-400">
                   <img src={img} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                   <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Upload size={40} className="mb-1" />
+                    <Upload size={20} className="mb-1" />
                     <span className="text-[10px] font-medium">Change</span>
                     <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(idx, e)} />
                   </label>
@@ -479,7 +479,7 @@ const Photogrid = () => {
             {/* AI Generator Panel */}
             {showAiPanel && (
               <div className="mb-4 p-4 bg-gradient-to-br from-purple-900/30 to-pink-900/30 border border-purple-500/30 rounded-xl">
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3">
                   <div className="flex-1">
                     <label className="block text-xs font-medium text-purple-200 mb-1">Describe your dream layout</label>
                     <textarea 
@@ -492,7 +492,7 @@ const Photogrid = () => {
                   <button 
                     onClick={generateLayout}
                     disabled={isGeneratingAI || !aiPrompt.trim()}
-                    className="h-16 mt-3 px-4 bg-purple-600 hover:bg-purple-500 disabled:bg-neutral-700 disabled:text-neutral-500 rounded-lg flex flex-col items-center justify-center text-xs font-bold transition-all text-white border border-purple-400/50"
+                    className="h-16 px-4 bg-purple-600 hover:bg-purple-500 disabled:bg-neutral-700 disabled:text-neutral-500 rounded-lg flex flex-col items-center justify-center text-xs font-bold transition-all text-white border border-purple-400/50"
                   >
                     {isGeneratingAI ? <Loader size={16} className="animate-spin mb-1"/> : <Wand2 size={16} className="mb-1"/>}
                     {isGeneratingAI ? 'Thinking' : 'Generate'}
@@ -531,11 +531,11 @@ const Photogrid = () => {
             </h2>
             
             {/* BG Mode Tabs */}
-            <div className="grid grid-cols-3 bg-neutral-900 p-1 rounded-lg mb-4">
+            <div className="flex bg-neutral-900 p-1 rounded-lg mb-4">
               <button onClick={() => setBgMode('color')} className={`flex-1 py-1 text-[10px] font-medium rounded ${bgMode === 'color' ? 'bg-neutral-700 text-white' : 'text-neutral-500'}`}><PaintBucket size={12} className="inline mr-1"/> Color</button>
               <button onClick={() => setBgMode('image')} className={`flex-1 py-1 text-[10px] font-medium rounded ${bgMode === 'image' ? 'bg-neutral-700 text-white' : 'text-neutral-500'}`}><ImageIcon size={12} className="inline mr-1"/> Image</button>
-              <button onClick={() => setBgMode('two-images')} className={`flex-1 py-1 text-[10px] font-medium rounded ${bgMode === 'two-image' ? 'bg-neutral-700 text-white' : 'text-neutral-500'}`}><ImagePlusIcon size={12} className="inline mr-1" /> 2ximage</button>
-              <button onClick={() => setBgMode('split')} className={`mt-1 flex-1 py-1 text-[10px] font-medium rounded ${bgMode === 'split' ? 'bg-neutral-700 text-white' : 'text-neutral-500'}`}><SplitSquareHorizontal size={12} className="inline mr-1"/> 4ximages</button>
+              <button onClick={() => setBgMode('two-images')} className={`flex-1 py-1 text-[10px] font-medium rounded ${bgMode === 'two-image' ? 'bg-neutral-700 text-white' : 'text-neutral-500'}`}><ImageIcon size={12} className="inline mr-1" /> 2ximage</button>
+              <button onClick={() => setBgMode('split')} className={`flex-1 py-1 text-[10px] font-medium rounded ${bgMode === 'split' ? 'bg-neutral-700 text-white' : 'text-neutral-500'}`}><SplitSquareHorizontal size={12} className="inline mr-1"/> Split</button>
             </div>
 
             {/* Mode Specific Controls */}
