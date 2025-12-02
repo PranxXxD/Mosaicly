@@ -635,7 +635,7 @@ User Prompt: "${aiPrompt}"
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
 
           {/* 1. Uploads */}
-          <div className="lg:col-span-3 col-span-2 bg-neutral-800/50 p-5 rounded-2xl border border-neutral-800 h-fit">
+          <div className="lg:col-span-3 col-span-2 bg-neutral-800/50 p-5 rounded-2xl border border-neutral-800 h-fit max-h-[300px] overflow-y-scroll">
             <h2 className="text-sm uppercase tracking-wider text-neutral-400 font-semibold mb-4 flex items-center gap-2">
               <Upload size={14} /> 1. Photos
             </h2>
@@ -699,7 +699,7 @@ User Prompt: "${aiPrompt}"
             )}
 
             {/* Layout Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto max-h-[160px] pr-2 custom-scrollbar">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
               {Object.entries(layouts).map(([key, layout]) => (
                 <button
                   key={key}
