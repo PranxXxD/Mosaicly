@@ -950,7 +950,7 @@ User Prompt: "${aiPrompt}"
               </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 overflow-y-auto p-1 custom-scrollbar">
+            <div className="grid grid-cols-4 lg:grid-cols-2 gap-2 overflow-y-auto p-1 custom-scrollbar">
               {images.map((img, idx) => (
                 <div
                   key={idx}
