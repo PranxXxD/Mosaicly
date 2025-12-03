@@ -85,37 +85,6 @@ const INITIAL_FRAME_ADJUSTMENTS = {
   3: { x: 0, y: 0, scale: 1, rotate: 4, flipX: false, flipY: false },
 };
 
-// Local Storage Key
-// const STORAGE_KEY = 'PHOTOGRID_STATE';
-
-// const getDefaultState = () => ({
-//   images: Array(4).fill(null), // Holds base64 or URL for the 4 slots
-//   transforms: Array(4).fill({ scale: 1, rotate: 0, flipX: false, flipY: false }),
-//   layout: defaultLayouts.seamless,
-//   bgImage: null,
-//   bgColor: '#0a0a0a',
-//   gridGap: 10,
-//   editorWidth: '95%',
-//   editorHeight: '95%',
-//   message: null,
-//   lastSaved: null
-// });
-
-// // Helper function to load state from Local Storage
-// const loadStateFromStorage = () => {
-//   try {
-//     const serializedState = localStorage.getItem(STORAGE_KEY);
-//     if (serializedState === null) {
-//       return getDefaultState();
-//     }
-//     const savedState = JSON.parse(serializedState);
-//     // Ensure the loaded state has the necessary 'lastSaved' property or default it
-//     return { ...getDefaultState(), ...savedState, lastSaved: savedState.lastSaved ? new Date(savedState.lastSaved) : null };
-//   } catch (e) {
-//     console.error("Could not load state from local storage:", e);
-//     return getDefaultState();
-//   }
-// };
 
 const Photogrid = () => {
   const apiKey = import.meta.env.VITE_API_KEY; // API Key injected at runtime
@@ -156,11 +125,16 @@ const Photogrid = () => {
   const [libsLoaded, setLibsLoaded] = useState(false);
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
 
+  // Mobile touch 
+  // const [touchPosition, setTouchPosition] = useState({ x: 0, y: 0 });
+
 
   // Dragging Refs/State
   const canvasRef = useRef(null);
   const dragStartRef = useRef({ x: 0, y: 0 });
+  // const dragStartRefMobile = useRef({ x: 0, y: 0 });
   const [draggingId, setDraggingId] = useState(null);
+  // const [MobdraggingId, setMobDraggingId] = useState(null);
 
   // Modal State
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -172,102 +146,7 @@ const Photogrid = () => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
-
-
-  // save work section starts
-
-  // const [state, setState] = useState(loadStateFromStorage);
-  // console.log(state)
-  // const saveTimeoutRef = useRef(null);
-
-  // --- LOCAL STORAGE PERSISTENCE (EFFECTS) ---
-
-  // 1. Automatic Debounced Save to Local Storage
-  // useEffect(() => {
-  //   // Only save if the component is mounted and we have valid state
-  //   if (saveTimeoutRef.current) {
-  //     clearTimeout(saveTimeoutRef.current);
-  //   }
-
-  //   // Debounce the save operation to avoid excessive writes
-  //   saveTimeoutRef.current = setTimeout(() => {
-  //     const stateToSave = {
-  //       images,
-  //       layouts,
-  //       bgImage,
-  //       bgColor,
-  //       // lastSaved: new Date().toISOString()
-  //     };
-  //     try {
-  //       localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-  //       // Update the lastSaved state to reflect the automatic save time
-  //       setState(s => ({ ...s, lastSaved: new Date() }));
-  //       console.log('State automatically saved to Local Storage.');
-  //     } catch (e) {
-  //       console.error("Error saving state to local storage:", e);
-  //       // Changed setMessage to use setState directly
-  //       setState(s => ({ ...s, message: 'Error: Could not automatically save work.' }));
-  //     }
-  //   }, 5000); // 5 second debounce
-
-  //   // Cleanup function to clear the timeout when the effect re-runs or component unmounts
-  //   return () => {
-  //     if (saveTimeoutRef.current) {
-  //       clearTimeout(saveTimeoutRef.current);
-  //     }
-  //   };
-  // }, [images, layouts, bgImage, bgColor]); // Dependencies that trigger save
-
-  // const manualSave = () => {
-  //   const stateToSave = {
-  //     images,
-  //     layouts,
-  //     bgImage,
-  //     bgColor,
-  //     // lastSaved: new Date().toISOString()
-  //   };
-  //   try {
-  //     localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-  //     setState(s => ({ ...s, message: 'Work saved manually!', lastSaved: new Date() }));
-  //   } catch (e) {
-  //     setState(s => ({ ...s, message: 'Error: Failed to save work.' }));
-  //     console.error("Manual save failed:", e);
-  //   } finally {
-  //     setTimeout(() => setState(s => ({ ...s, message: null })), 3000);
-  //   }
-  // };
-
-
-  // const manualLoad = () => {
-  //   const loadedState = loadStateFromStorage();
-  //   setState(() => ({ ...loadedState, message: 'Work loaded successfully!' }));
-  //   setTimeout(() => setState(s => ({ ...s, message: null })), 3000);
-  // };
-
-  // const manualClear = () => {
-  //   // Use a custom modal in production, but window.confirm for simplicity here.
-  //   // NOTE: Using a simple JS confirmation for this context, but in a real React app, a custom modal is preferred.
-  //   if (!window.confirm("Are you sure you want to clear ALL saved work from this browser?")) return;
-  //   try {
-  //     localStorage.removeItem(STORAGE_KEY);
-  //     setState(() => ({ ...getDefaultState(), message: 'Saved work cleared. Editor reset.' }));
-  //   } catch (e) {
-  //     setState(s => ({ ...s, message: 'Error: Failed to clear saved work.' }));
-  //     console.error("Clear storage failed:", e);
-  //   } finally {
-  //     setTimeout(() => setState(s => ({ ...s, message: null })), 3000);
-  //   }
-  // };
-
-//   const formatTimestamp = (date) => {
-//     if (!date) return "Never";
-//     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric', year: 'numeric' });
-// };
-
-// Save work section ends here
-
-
-  // --- Effects ---
+  
   useEffect(() => {
     const loadScript = (src) => {
       return new Promise((resolve, reject) => {
@@ -294,18 +173,20 @@ const Photogrid = () => {
   }, []);
 
   // --- Handlers: Drag & Drop Ordering ---
+
+  // Desktop Drag Start
   const onDragStart = (e, index) => {
     setDraggedItemIndex(index);
     e.dataTransfer.effectAllowed = "move";
   };
 
-
-  const onDragOver = (e, index) => {
+  // Desktop Drag Over
+  const onDragOver = (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    console.log(index)
   };
 
+  // Desktop Drop Over
   const onDrop = (e, index) => {
     e.preventDefault();
     if (draggedItemIndex === null || draggedItemIndex === index) return;
@@ -328,6 +209,39 @@ const Photogrid = () => {
     setImageAdjustments(newAdj);
     setDraggedItemIndex(null);
   };
+
+  // // Mobile Touch Start
+  // const onTouchStart = (e, index) => {
+  //   setDraggedItemIndex(index);
+  //   const touch = e.touches[0];
+  //   setTouchPosition({ x: touch.clientX, y: touch.clientY });
+
+  // };
+
+  // // Mobile Touch Move
+
+  // // Mobile Touch Move
+  // const onTouchMove = (e) => {
+  //   e.preventDefault();
+  //   const touch = e.touches[0];
+  //   setTouchPosition({ x: touch.clientX, y: touch.clientY });
+  // };
+
+
+  // // Mobile Touch End
+  // const onTouchEnd = (e, index) => {
+  //   if (draggedItemIndex === null || draggedItemIndex === index) return;
+
+  //   const newImages = [...images];
+  //   const itemToMove = newImages[draggedItemIndex];
+  //   newImages.splice(draggedItemIndex, 1);
+  //   newImages.splice(index, 0, itemToMove);
+  //   setImages(newImages);
+
+  //   setDraggedItemIndex(null);
+  // };
+
+
 
   // --- Handlers: Uploads ---
   const handleBulkUpload = useCallback((e) => {
@@ -379,7 +293,10 @@ const Photogrid = () => {
     e.preventDefault();
     e.stopPropagation(); // Prevent bubbling issues
     setDraggingId(index);
+    // setMobDraggingId(index);
+    // const touch = e.touches[0];
     dragStartRef.current = { x: e.clientX, y: e.clientY };
+    // dragStartRefMobile.current = { x: e.clientX, y: e.clientY };
   };
 
   const handleMouseMove = useCallback((e) => {
@@ -388,9 +305,14 @@ const Photogrid = () => {
     // Calculate raw delta
     const dx = e.clientX - dragStartRef.current.x;
     const dy = e.clientY - dragStartRef.current.y;
+    
+    // // const touch = e.touches[0];
+    // const Mx = e.clientX - dragStartRefMobile.current.x;
+    // const My = e.clientY - dragStartRefMobile.current.y;
 
     // Reset start to current for incremental updates
     dragStartRef.current = { x: e.clientX, y: e.clientY };
+    // dragStartRefMobile.current = { x: e.clientX, y: e.clientY };
 
     if (toolMode === 'content') {
       // MODE: Content (Crop/Pan Image inside Frame)
@@ -398,7 +320,8 @@ const Photogrid = () => {
         const current = prev[draggingId] || { x: 0, y: 0, scale: 1, rotate: 0 };
         return {
           ...prev,
-          [draggingId]: { ...current, x: current.x + dx, y: current.y + dy }
+          [draggingId]: { ...current, x: current.x + dx, y: current.y + dy },
+          
         };
       });
     } else {
@@ -407,14 +330,17 @@ const Photogrid = () => {
         const rect = canvasRef.current.getBoundingClientRect();
         // Convert pixel delta to percentage delta based on canvas size
         const dxPct = (dx / rect.width) * 100;
-        const dyPct = (dy / rect.height) * 100;
+        const dyPct = (dy / rect.height) * 100; 
+        
+        // const MxPct = (Mx / rect.width) * 100;
+        // const MyPct = (My / rect.height) * 100;
 
         setLayouts(prev => {
           // Deep clone to modify the active layout items
           const newLayouts = { ...prev };
           const active = { ...newLayouts[activeLayout] };
           const newItems = [...active.items];
-          const targetItem = { ...newItems[draggingId] };
+          const targetItem = { ...newItems[draggingId]};
 
           // Update position
           targetItem.left = `${parseFloat(targetItem.left) + dxPct}%`;
@@ -431,6 +357,7 @@ const Photogrid = () => {
 
   const handleMouseUp = useCallback(() => {
     setDraggingId(null);
+    // setMobDraggingId(null);
   }, []);
 
   useEffect(() => {
@@ -958,11 +885,16 @@ User Prompt: "${aiPrompt}"
                   onDragStart={(e) => onDragStart(e, idx)}
                   onDragOver={(e) => onDragOver(e, idx)}
                   onDrop={(e) => onDrop(e, idx)}
+                  // onTouchStart={(e) => onTouchStart(e, idx)}
+                  // onTouchMove={(e) => onTouchMove(e)}
+                  // onTouchEnd={(e) => onTouchEnd(e, idx)}
                   className="group relative aspect-square bg-zinc-950 rounded-lg overflow-hidden border border-zinc-800 hover:border-zinc-600 transition-all cursor-move"
+
+
                 >
                   {img ? (
                     <>
-                      <img src={img} loading="lazy" alt={`Asset ${idx}`} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                      <img src={img} loading="lazy" alt={`Asset ${idx}`} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"/>
 
                       {/* Hover Actions */}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[2px]">
@@ -1163,11 +1095,15 @@ User Prompt: "${aiPrompt}"
                         const style = getRenderStyle(idx);
                         {/* if (!style.container.left) return null; */ }
                         return (
-                          <div key={idx} className="absolute group" style={style.container} onMouseDown={(e) => handleMouseDown(e, idx)}>
+                          <div key={idx} className="absolute group" style={style.container} onTouchMove={(e) => handleMouseDown(e, idx)} onMouseDown={(e) => handleMouseDown(e, idx) }
+                          
+                          >
                             <div className="w-full h-full overflow-hidden relative shadow-xl hover:shadow-indigo-500/20 transition-shadow">
                               {img ? (
                                 <>
-                                  <img src={img} draggable={false} className="w-full h-full object-cover pointer-events-none select-none" style={style.image} />
+                                  <img src={img} draggable={false}
+                                   
+                                    className="w-full h-full object-cover pointer-events-none select-none" style={style.image} />
                                   {/* Quick Actions Overlay */}
                                   <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-50">
 
