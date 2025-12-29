@@ -8,12 +8,6 @@ import {
   HardDrive,
   Save
 } from 'lucide-react';
-import { MovingFrame } from './draggable';
-import { DndContext, PointerSensor, TouchSensor, useDraggable, useSensor, useSensors } from '@dnd-kit/core';
-
-import { CSS } from '@dnd-kit/utilities';
-
-
 
 
 // --- Production Ready UI Constants ---
@@ -91,6 +85,37 @@ const INITIAL_FRAME_ADJUSTMENTS = {
   3: { x: 0, y: 0, scale: 1, rotate: 4, flipX: false, flipY: false },
 };
 
+// Local Storage Key
+// const STORAGE_KEY = 'PHOTOGRID_STATE';
+
+// const getDefaultState = () => ({
+//   images: Array(4).fill(null), // Holds base64 or URL for the 4 slots
+//   transforms: Array(4).fill({ scale: 1, rotate: 0, flipX: false, flipY: false }),
+//   layout: defaultLayouts.seamless,
+//   bgImage: null,
+//   bgColor: '#0a0a0a',
+//   gridGap: 10,
+//   editorWidth: '95%',
+//   editorHeight: '95%',
+//   message: null,
+//   lastSaved: null
+// });
+
+// // Helper function to load state from Local Storage
+// const loadStateFromStorage = () => {
+//   try {
+//     const serializedState = localStorage.getItem(STORAGE_KEY);
+//     if (serializedState === null) {
+//       return getDefaultState();
+//     }
+//     const savedState = JSON.parse(serializedState);
+//     // Ensure the loaded state has the necessary 'lastSaved' property or default it
+//     return { ...getDefaultState(), ...savedState, lastSaved: savedState.lastSaved ? new Date(savedState.lastSaved) : null };
+//   } catch (e) {
+//     console.error("Could not load state from local storage:", e);
+//     return getDefaultState();
+//   }
+// };
 
 const Photogrid = () => {
   const apiKey = import.meta.env.VITE_API_KEY; // API Key injected at runtime
@@ -110,6 +135,8 @@ const Photogrid = () => {
   // Adjustments now include advanced transforms
   // Structure: { [index]: { x, y, scale, rotate, flipX, flipY } }
   // Content/Frame Adjustments
+  const [imageAdjustments, setImageAdjustments] = useState({});
+  const [frameAdjustments, setFrameAdjustments] = useState(INITIAL_FRAME_ADJUSTMENTS);
 
 
   // Background State with Transforms
@@ -129,17 +156,14 @@ const Photogrid = () => {
   const [libsLoaded, setLibsLoaded] = useState(false);
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
 
+  // Mobile touch 
+  // const [touchPosition, setTouchPosition] = useState({ x: 0, y: 0 });
+
 
   // Dragging Refs/State
   const canvasRef = useRef(null);
-  // const dragStartRef = useRef({ x: 0, y: 0 });
-
-
-  // react dnd 
+  const dragStartRef = useRef({ x: 0, y: 0 });
   const [draggingId, setDraggingId] = useState(null);
-  const [frameAdjustments, setFrameAdjustments] = useState({});
-  const [imageAdjustments, setImageAdjustments] = useState(INITIAL_FRAME_ADJUSTMENTS);
-
 
   // Modal State
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -152,6 +176,101 @@ const Photogrid = () => {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
 
+
+  // save work section starts
+
+  // const [state, setState] = useState(loadStateFromStorage);
+  // console.log(state)
+  // const saveTimeoutRef = useRef(null);
+
+  // --- LOCAL STORAGE PERSISTENCE (EFFECTS) ---
+
+  // 1. Automatic Debounced Save to Local Storage
+  // useEffect(() => {
+  //   // Only save if the component is mounted and we have valid state
+  //   if (saveTimeoutRef.current) {
+  //     clearTimeout(saveTimeoutRef.current);
+  //   }
+
+  //   // Debounce the save operation to avoid excessive writes
+  //   saveTimeoutRef.current = setTimeout(() => {
+  //     const stateToSave = {
+  //       images,
+  //       layouts,
+  //       bgImage,
+  //       bgColor,
+  //       // lastSaved: new Date().toISOString()
+  //     };
+  //     try {
+  //       localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+  //       // Update the lastSaved state to reflect the automatic save time
+  //       setState(s => ({ ...s, lastSaved: new Date() }));
+  //       console.log('State automatically saved to Local Storage.');
+  //     } catch (e) {
+  //       console.error("Error saving state to local storage:", e);
+  //       // Changed setMessage to use setState directly
+  //       setState(s => ({ ...s, message: 'Error: Could not automatically save work.' }));
+  //     }
+  //   }, 5000); // 5 second debounce
+
+  //   // Cleanup function to clear the timeout when the effect re-runs or component unmounts
+  //   return () => {
+  //     if (saveTimeoutRef.current) {
+  //       clearTimeout(saveTimeoutRef.current);
+  //     }
+  //   };
+  // }, [images, layouts, bgImage, bgColor]); // Dependencies that trigger save
+
+  // const manualSave = () => {
+  //   const stateToSave = {
+  //     images,
+  //     layouts,
+  //     bgImage,
+  //     bgColor,
+  //     // lastSaved: new Date().toISOString()
+  //   };
+  //   try {
+  //     localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+  //     setState(s => ({ ...s, message: 'Work saved manually!', lastSaved: new Date() }));
+  //   } catch (e) {
+  //     setState(s => ({ ...s, message: 'Error: Failed to save work.' }));
+  //     console.error("Manual save failed:", e);
+  //   } finally {
+  //     setTimeout(() => setState(s => ({ ...s, message: null })), 3000);
+  //   }
+  // };
+
+
+  // const manualLoad = () => {
+  //   const loadedState = loadStateFromStorage();
+  //   setState(() => ({ ...loadedState, message: 'Work loaded successfully!' }));
+  //   setTimeout(() => setState(s => ({ ...s, message: null })), 3000);
+  // };
+
+  // const manualClear = () => {
+  //   // Use a custom modal in production, but window.confirm for simplicity here.
+  //   // NOTE: Using a simple JS confirmation for this context, but in a real React app, a custom modal is preferred.
+  //   if (!window.confirm("Are you sure you want to clear ALL saved work from this browser?")) return;
+  //   try {
+  //     localStorage.removeItem(STORAGE_KEY);
+  //     setState(() => ({ ...getDefaultState(), message: 'Saved work cleared. Editor reset.' }));
+  //   } catch (e) {
+  //     setState(s => ({ ...s, message: 'Error: Failed to clear saved work.' }));
+  //     console.error("Clear storage failed:", e);
+  //   } finally {
+  //     setTimeout(() => setState(s => ({ ...s, message: null })), 3000);
+  //   }
+  // };
+
+  //   const formatTimestamp = (date) => {
+  //     if (!date) return "Never";
+  //     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric', year: 'numeric' });
+  // };
+
+  // Save work section ends here
+
+
+  // --- Effects ---
   useEffect(() => {
     const loadScript = (src) => {
       return new Promise((resolve, reject) => {
@@ -215,6 +334,38 @@ const Photogrid = () => {
     setDraggedItemIndex(null);
   };
 
+  // // Mobile Touch Start
+  // const onTouchStart = (e, index) => {
+  //   setDraggedItemIndex(index);
+  //   const touch = e.touches[0];
+  //   setTouchPosition({ x: touch.clientX, y: touch.clientY });
+
+  // };
+
+  // // Mobile Touch Move
+
+  // // Mobile Touch Move
+  // const onTouchMove = (e) => {
+  //   e.preventDefault();
+  //   const touch = e.touches[0];
+  //   setTouchPosition({ x: touch.clientX, y: touch.clientY });
+  // };
+
+
+  // // Mobile Touch End
+  // const onTouchEnd = (e, index) => {
+  //   if (draggedItemIndex === null || draggedItemIndex === index) return;
+
+  //   const newImages = [...images];
+  //   const itemToMove = newImages[draggedItemIndex];
+  //   newImages.splice(draggedItemIndex, 1);
+  //   newImages.splice(index, 0, itemToMove);
+  //   setImages(newImages);
+
+  //   setDraggedItemIndex(null);
+  // };
+
+
 
   // --- Handlers: Uploads ---
   const handleBulkUpload = useCallback((e) => {
@@ -260,265 +411,93 @@ const Photogrid = () => {
     });
   };
 
-
-  // react dnd code
-
-  // ✅ Sensors for desktop + mobile
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        distance: 8 // Avoid accidental drags
-      }
-    })
-  );
-
-
-
-  const handleDragEnd = (event) => {
-    const { active, delta } = event;
-
-
-    if (active.id.startsWith('image-')) {
-      const index = parseInt(active.id.replace('image-', ''), 10);
-      setImageAdjustments((prev) => {
-        const current = prev[index] || { x: 0, y: 0, scale: 1, rotate: 0 };
-        return {
-          ...prev,
-          [index]: { ...current, x: current.x + delta.x, y: current.y + delta.y }
-        };
-      });
-    }
-    else if (active.id.startsWith('frame-')) {
-      // ✅ Move frame
-      const index = parseInt(active.id.replace('frame-', ''), 10);
-      const rect = document.querySelector('#canvas').getBoundingClientRect();
-      const dxPct = (delta.x / rect.width) * 100;
-      const dyPct = (delta.y / rect.height) * 100;
-
-      setLayouts((prev) => {
-        const newLayouts = { ...prev };
-        const activeLayoutObj = { ...newLayouts[activeLayout] };
-        const newItems = [...activeLayoutObj.items];
-        const targetItem = { ...newItems[index] };
-
-        targetItem.left = `${parseFloat(targetItem.left) + dxPct}%`;
-        targetItem.top = `${parseFloat(targetItem.top) + dyPct}%`;
-
-        newItems[index] = targetItem;
-        activeLayoutObj.items = newItems;
-        newLayouts[activeLayout] = activeLayoutObj;
-        return newLayouts;
-      });
-    }
-
-    setDraggingId(null);
+  // --- Handlers: Canvas Drag Pan/Move ---
+  const handleMouseDown = (e, index) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation(); // Prevent bubbling issues
+    setDraggingId(index);
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
   };
 
+  const handleMouseMove = useCallback((e) => {
+    if (draggingId === null) return;
 
+    // Calculate raw delta
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
 
-  function DraggableFrame({ id, style, children, toolMode }) {
-    // Only enable drag for frame when toolMode === 'frame'
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({
-      id
-    });
+    // Reset start to current for incremental updates
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
 
-    const dragStyle = {
-      ...style,
-      transform: [
-        transform ? CSS.Translate.toString(transform) : '',
-        style.transform || ''
-      ].filter(Boolean).join(' ')
+    if (toolMode === 'content') {
+      // MODE: Content (Crop/Pan Image inside Frame)
+      setImageAdjustments(prev => {
+        const current = prev[draggingId] || { x: 0, y: 0, scale: 1, rotate: 0 };
+        return {
+          ...prev,
+          [draggingId]: { ...current, x: current.x + dx, y: current.y + dy }
+        };
+      });
+    } else {
+      // MODE: Frame (Move Layout Box)
+      if (canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        // Convert pixel delta to percentage delta based on canvas size
+        const dxPct = (dx / rect.width) * 100;
+        const dyPct = (dy / rect.height) * 100;
+
+        setLayouts(prev => {
+          // Deep clone to modify the active layout items
+          const newLayouts = { ...prev };
+          const active = { ...newLayouts[activeLayout] };
+          const newItems = [...active.items];
+          const targetItem = { ...newItems[draggingId] };
+
+          // Update position
+          targetItem.left = `${parseFloat(targetItem.left) + dxPct}%`;
+          targetItem.top = `${parseFloat(targetItem.top) + dyPct}%`;
+
+          newItems[draggingId] = targetItem;
+          active.items = newItems;
+          newLayouts[activeLayout] = active;
+          return newLayouts;
+        });
+      }
+    }
+  }, [draggingId, toolMode, activeLayout]);
+
+  const handleMouseUp = useCallback(() => {
+    setDraggingId(null);
+  }, []);
+
+  useEffect(() => {
+    if (draggingId !== null) {
+      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('mousemove', handleMouseMove);
+    }
+    return () => {
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', handleMouseMove);
     };
-
-    return (
-      <div
-        ref={setNodeRef}
-        style={dragStyle}
-        {...(toolMode === 'frame' ? { ...listeners, ...attributes } : {})} // ✅ Apply listeners only in frame mode
-        className="absolute group"
-      >
-        {children}
-      </div>
-    );
-  }
-
-
-
-  function DraggableImage({ id, style, src, toolMode }) {
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({ id });
-  
-    const dragTranslate = transform ? CSS.Translate.toString(transform) : '';
-    const persisted = style?.transform || '';
-  
-    const dragStyle = {
-      ...style,
-      // IMPORTANT: combine dnd's temporary translate with your persisted transform
-      transform: [dragTranslate, persisted].filter(Boolean).join(' '),
-    };
-  
-    return (
-      <img
-        ref={setNodeRef}
-        src={src}
-        style={dragStyle}
-        {...(toolMode === 'content' ? { ...listeners, ...attributes } : {})}
-        draggable={false}
-        className="w-full h-full object-cover"
-      />
-    );
-  }
-  
-
-
-
-
-
-
-  // --- Handlers: Canvas Drag Pan/Move ---
-  // const handleMouseDown = (e, index) => {
-  //   if (e.button !== 0) return;
-  //   e.preventDefault();
-  //   e.stopPropagation(); // Prevent bubbling issues
-  //   setDraggingId(index);
-  //   // setMobDraggingId(index);
-  //   // const touch = e.touches[0];
-  //   dragStartRef.current = { x: e.clientX, y: e.clientY };
-  //   // dragStartRefMobile.current = { x: e.clientX, y: e.clientY };
-  // };
-
-  // const handleMouseMove = useCallback((e) => {
-  //   if (draggingId === null) return;
-
-  //   // Calculate raw delta
-  //   const dx = e.clientX - dragStartRef.current.x;
-  //   const dy = e.clientY - dragStartRef.current.y;
-
-  //   // // const touch = e.touches[0];
-  //   // const Mx = e.clientX - dragStartRefMobile.current.x;
-  //   // const My = e.clientY - dragStartRefMobile.current.y;
-
-  //   // Reset start to current for incremental updates
-  //   dragStartRef.current = { x: e.clientX, y: e.clientY };
-  //   // dragStartRefMobile.current = { x: e.clientX, y: e.clientY };
-
-  //   if (toolMode === 'content') {
-  //     // MODE: Content (Crop/Pan Image inside Frame)
-  //     setImageAdjustments(prev => {
-  //       const current = prev[draggingId] || { x: 0, y: 0, scale: 1, rotate: 0 };
-  //       return {
-  //         ...prev,
-  //         [draggingId]: { ...current, x: current.x + dx, y: current.y + dy },
-
-  //       };
-  //     });
-  //   } else {
-  //     // MODE: Frame (Move Layout Box)
-  //     if (canvasRef.current) {
-  //       const rect = canvasRef.current.getBoundingClientRect();
-  //       // Convert pixel delta to percentage delta based on canvas size
-  //       const dxPct = (dx / rect.width) * 100;
-  //       const dyPct = (dy / rect.height) * 100;
-
-  //       // const MxPct = (Mx / rect.width) * 100;
-  //       // const MyPct = (My / rect.height) * 100;
-
-  //       setLayouts(prev => {
-  //         // Deep clone to modify the active layout items
-  //         const newLayouts = { ...prev };
-  //         const active = { ...newLayouts[activeLayout] };
-  //         const newItems = [...active.items];
-  //         const targetItem = { ...newItems[draggingId] };
-
-  //         // Update position
-  //         targetItem.left = `${parseFloat(targetItem.left) + dxPct}%`;
-  //         targetItem.top = `${parseFloat(targetItem.top) + dyPct}%`;
-
-  //         newItems[draggingId] = targetItem;
-  //         active.items = newItems;
-  //         newLayouts[activeLayout] = active;
-  //         return newLayouts;
-  //       });
-  //     }
-  //   }
-  // }, [draggingId, toolMode, activeLayout]);
-
-  // const handleMouseUp = useCallback(() => {
-  //   setDraggingId(null);
-  //   // setMobDraggingId(null);
-  // }, []);
-
-  // useEffect(() => {
-  //   if (draggingId !== null) {
-  //     window.addEventListener('mouseup', handleMouseUp);
-  //     window.addEventListener('mousemove', handleMouseMove);
-  //   }
-  //   return () => {
-  //     window.removeEventListener('mouseup', handleMouseUp);
-  //     window.removeEventListener('mousemove', handleMouseMove);
-  //   };
-  // }, [draggingId, handleMouseMove, handleMouseUp]);
+  }, [draggingId, handleMouseMove, handleMouseUp]);
 
 
   // --- Handlers: Modal & Transformations ---
-
-  // const openEditModal = (indexOrBg, type = "content" ) => { 
-  //   console.log("editModalOpen", editModalOpen)
-  //   // Added 'type' parameter
-  //   setEditingIndex(indexOrBg);
-  //   setEditingType(type); // Set the type of editing
-
-
-  //   // Load the correct transformation data into tempTransform
-  //   if (indexOrBg === 'bg') {
-  //     setTempTransform({ ...bgAdjustment });
-  //   } else if (type === 'frame') {
-  //     setTempTransform(frameAdjustments[indexOrBg] || { x: 0, y: 0, scale: 1, rotate: 0, flipX: false, flipY: false });
-  //   } else { // type === 'content'
-  //     setTempTransform(imageAdjustments[indexOrBg] || { x: 0, y: 0, scale: 1, rotate: 0, flipX: false, flipY: false });
-  //   }
-  //   setEditModalOpen(true);
-  // };
-
-
-
-
-  const openEditModal = useCallback((indexOrBg, type = "content") => {
-
-    const defaultTransform = { x: 0, y: 0, scale: 1, rotate: 0, flipX: false, flipY: false };
-    // Validate type
-    const editType = type === "frame" ? "frame" : type === "content" ? "content" : "content";
-
-    setEditModalOpen(true);
+  const openEditModal = (indexOrBg, type = 'content') => { // Added 'type' parameter
     setEditingIndex(indexOrBg);
-    setEditingType(editType);
+    setEditingType(type); // Set the type of editing
 
-    console.log("editType", editType)
-
-    // Load correct transformation data into tempTransform
-    if (indexOrBg === "bg") {
-      setTempTransform({ ...(bgAdjustment ?? defaultTransform) });
-      return;
+    // Load the correct transformation data into tempTransform
+    if (indexOrBg === 'bg') {
+      setTempTransform({ ...bgAdjustment });
+    } else if (type === 'frame') {
+      setTempTransform(frameAdjustments[indexOrBg] || { x: 0, y: 0, scale: 1, rotate: 0, flipX: false, flipY: false });
+    } else { // type === 'content'
+      setTempTransform(imageAdjustments[indexOrBg] || { x: 0, y: 0, scale: 1, rotate: 0, flipX: false, flipY: false });
     }
-
-    // Validate index for frame/content
-    const idx = Number(indexOrBg);
-    const isValidIndex = Number.isInteger(idx) && idx >= 0;
-
-    if (!isValidIndex) {
-      console.warn("openEditModal: invalid index", indexOrBg, editType);
-      setTempTransform(defaultTransform);
-      return;
-    }
-
-    if (editType === "frame") {
-      const frame = frameAdjustments?.[idx] ?? defaultTransform;
-      setTempTransform({ ...frame });
-    } else {
-      const image = imageAdjustments?.[idx] ?? defaultTransform;
-      setTempTransform({ ...image });
-    }
-  }, [bgAdjustment, frameAdjustments, imageAdjustments]);
+    setEditModalOpen(true);
+  };
 
 
   const saveEditModal = () => {
@@ -649,6 +628,73 @@ User Prompt: "${aiPrompt}"
   };
 
 
+
+
+  // ✅ Random Layout Generator
+
+  // "Streetwear Fashion Collage with 5 images featuring bold colors, sneakers, and urban vibes.
+
+
+  // function generateRandomLayout(prompt, count) {
+
+  //   const Newlayout = {
+  //     name: prompt.slice(0, 30),
+  //     description: `Instagram collage layout for ${prompt}`,
+  //     items: []
+  //   };
+
+  //   const isGridMode = count > 10; // Switch to grid for large counts
+
+  //   if (isGridMode) {
+  //     const columns = Math.ceil(Math.sqrt(count)); // Square-ish grid
+  //     const rows = Math.ceil(count / columns);
+  //     const cellWidth = 100 / columns;
+  //     const cellHeight = 100 / rows;
+
+  //     for (let i = 0; i < count; i++) {
+  //       const col = i % columns;
+  //       const row = Math.floor(i / columns);
+
+  //       const left = `${col * cellWidth + 2}%`;
+  //       const top = `${row * cellHeight + 2}%`;
+  //       const width = `${cellWidth - 4}%`;
+  //       const height = `${cellHeight - 4}%`;
+
+  //       Newlayout.items.push({
+  //         left,
+  //         top,
+  //         width,
+  //         height,
+  //         zIndex: 1,
+  //         rotate: 0 // No rotation for grid
+  //       });
+  //     }
+  //   } else {
+  //     for (let i = 0; i < count; i++) {
+  //       const left = `${Math.floor(Math.random() * 80)}%`;
+  //       const top = `${Math.floor(Math.random() * 60)}%`;
+
+  //       let width, height;
+  //       if (count <= 4) {
+  //         width = `${20 + Math.floor(Math.random() * 5)}%`;
+  //         height = `${40 + Math.floor(Math.random() * 20)}%`;
+  //       } else if (count <= 8) {
+  //         width = `${15 + Math.floor(Math.random() * 10)}%`;
+  //         height = `${30 + Math.floor(Math.random() * 20)}%`;
+  //       } else {
+  //         width = `${8 + Math.floor(Math.random() * 5)}%`;
+  //         height = `${12 + Math.floor(Math.random() * 8)}%`;
+  //       }
+
+  //       const zIndex = Math.floor(Math.random() * 15) + 5;
+  //       const rotate = Math.floor(Math.random() * 21) - 10;
+
+  //       Newlayout.items.push({ left, top, width, height, zIndex, rotate });
+  //     }
+  //   }
+
+  //   return Newlayout;
+  // }
 
   function generateRandomLayout(prompt, count) {
     const Newlayout = {
@@ -843,72 +889,35 @@ User Prompt: "${aiPrompt}"
   };
 
   // --- Render Helpers ---
-  // const getRenderStyle = (index) => {
-  //   if (!layouts[activeLayout] || !layouts[activeLayout].items[index]) return {};
-  //   const item = layouts[activeLayout].items[index];
+  const getRenderStyle = (index) => {
+    if (!layouts[activeLayout] || !layouts[activeLayout].items[index]) return {};
+    const item = layouts[activeLayout].items[index];
 
-  //   // Frame adjustment (New)
-  //   const fAdj = frameAdjustments[index] || { x: 0, y: 0, scale: 1, rotate: 0, flipX: false, flipY: false };
+    // Frame adjustment (New)
+    const fAdj = frameAdjustments[index] || { x: 0, y: 0, scale: 1, rotate: 0, flipX: false, flipY: false };
 
-  //   // Image content adjustment (Original)
-  //   const iAdj = imageAdjustments[index] || { x: 0, y: 0, scale: 1, rotate: 0, flipX: false, flipY: false };
+    // Image content adjustment (Original)
+    const iAdj = imageAdjustments[index] || { x: 0, y: 0, scale: 1, rotate: 0, flipX: false, flipY: false };
 
-  //   // Apply complex frame transform to the container
-  //   // Note: fAdj.x/y is not used here as frame movement is handled by item.left/top in the layout state for now.
-  //   const frameTransform = `rotate(${fAdj.rotate}deg) scale(${fAdj.scale}) scaleX(${fAdj.flipX ? -1 : 1}) scaleY(${fAdj.flipY ? -1 : 1})`;
+    // Apply complex frame transform to the container
+    // Note: fAdj.x/y is not used here as frame movement is handled by item.left/top in the layout state for now.
+    const frameTransform = `rotate(${fAdj.rotate}deg) scale(${fAdj.scale}) scaleX(${fAdj.flipX ? -1 : 1}) scaleY(${fAdj.flipY ? -1 : 1})`;
 
-  //   return {
-  //     container: {
-  //       left: item.left, top: item.top, width: item.width, height: item.height,
-  //       zIndex: item.zIndex,
-  //       transform: frameTransform,
-  //       cursor: toolMode === 'frame' ? 'move' : 'default',
-  //       transformOrigin: 'center'
-  //     },
-  //     image: {
-  //       // Apply image content transform
-  //       transform: `translate(${iAdj.x}px, ${iAdj.y}px) rotate(${iAdj.rotate}deg) scale(${iAdj.scale}) scaleX(${iAdj.flipX ? -1 : 1}) scaleY(${iAdj.flipY ? -1 : 1})`,
-  //       cursor: toolMode === 'content' ? (draggingId === index ? 'grabbing' : 'grab') : 'default'
-  //     }
-  //   };
-  // };
-
-
-
- 
-
-const getRenderStyle = (index) => {
-  const defaultAdj = { x: 0, y: 0, scale: 1, rotate: 0, flipX: false, flipY: false };
-
-  const layout = layouts[activeLayout];
-  if (!layout || !layout.items[index]) return {};
-
-  const item = layout.items[index];
-  const fAdj = frameAdjustments[index] || defaultAdj;
-  const iAdj = imageAdjustments[index] || defaultAdj;
-
-  return {
-    container: {
-      left: item.left,
-      top: item.top,
-      width: item.width,
-      height: item.height,
-      zIndex: item.zIndex,
-      transform: `rotate(${fAdj.rotate}deg) scale(${fAdj.scale}) scaleX(${fAdj.flipX ? -1 : 1}) scaleY(${fAdj.flipY ? -1 : 1})`,
-      cursor: toolMode === 'content' ? 'move' : 'default',
-      transformOrigin: 'center',
-      willChange: 'transform',
-    },
-    image: {
-      zIndex: item.zIndex,
-      // Persisted content transform (this is what should remain after drag)
-      transform: `translate(${iAdj.x}px, ${iAdj.y}px) rotate(${iAdj.rotate}deg) scale(${iAdj.scale}) scaleX(${iAdj.flipX ? -1 : 1}) scaleY(${iAdj.flipY ? -1 : 1})`,
-      cursor: toolMode === 'content' ? (draggingId === index ? 'grabbing' : 'grab') : 'default',
-      transformOrigin: 'center',
-      willChange: 'transform',
-    }
+    return {
+      container: {
+        left: item.left, top: item.top, width: item.width, height: item.height,
+        zIndex: item.zIndex,
+        transform: frameTransform,
+        cursor: toolMode === 'frame' ? 'move' : 'default',
+        transformOrigin: 'center'
+      },
+      image: {
+        // Apply image content transform
+        transform: `translate(${iAdj.x}px, ${iAdj.y}px) rotate(${iAdj.rotate}deg) scale(${iAdj.scale}) scaleX(${iAdj.flipX ? -1 : 1}) scaleY(${iAdj.flipY ? -1 : 1})`,
+        cursor: toolMode === 'content' ? (draggingId === index ? 'grabbing' : 'grab') : 'default'
+      }
+    };
   };
-};
 
 
   return (
@@ -968,7 +977,7 @@ const getRenderStyle = (index) => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
 
           {/* LEFT PANEL: Photos */}
-          <div className={`lg:col-span-3 ${THEME.panel} rounded-xl p-4 flex flex-col lg:h-[calc(100vh-140px)]`}>
+          <div className={`lg:col-span-3 ${THEME.panel} rounded-xl p-4 flex flex-col h-[calc(100vh-140px)]`}>
             <div className="flex justify-between items-center mb-4 pb-4 border-b border-zinc-800">
               <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
                 <Upload size={14} /> Assets
@@ -1135,7 +1144,7 @@ const getRenderStyle = (index) => {
             </div>
 
             {/* MAIN CANVAS AREA */}
-            <div className={`${THEME.panel} rounded-xl p-1 lg:min-h-[400px] flex flex-col relative`}>
+            <div className={`${THEME.panel} rounded-xl p-1 min-h-[400px] flex flex-col relative`}>
               {viewMode === 'canvas' ? (
                 <div className="w-full h-full flex flex-col">
                   <div className="flex justify-between items-center px-4 py-3 border-b border-zinc-800">
@@ -1163,7 +1172,7 @@ const getRenderStyle = (index) => {
                   </div>
 
                   <div className="flex-1 overflow-x-auto p-4 custom-scrollbar bg-zinc-950/50">
-                    <div ref={canvasRef} className="relative aspect-[4/1.5] lg:aspect-[4/1.25] border border-zinc-800 rounded-md overflow-hidden shadow-2xl lg:min-w-[1000px] bg-zinc-900 mx-auto"
+                    <div ref={canvasRef} className="relative aspect-[4/1.25] border border-zinc-800 rounded-md overflow-hidden shadow-2xl min-w-[1000px] bg-zinc-900 mx-auto"
                       style={{ backgroundColor: bgMode === 'color' ? bgColor : '#18181b' }}>
 
                       {/* Background Layer */}
@@ -1193,85 +1202,51 @@ const getRenderStyle = (index) => {
                       </div>
 
                       {/* Foreground Images */}
+                      {images.map((img, idx) => {
+                        const style = getRenderStyle(idx);
+                        {/* if (!style.container.left) return null; */ }
+                        return (
+                          <div key={idx} className="absolute group" style={style.container} onMouseDown={(e) => handleMouseDown(e, idx)}
+                          
+                          >
+                            <div className="w-full h-full overflow-hidden relative shadow-xl hover:shadow-indigo-500/20 transition-shadow">
+                              {img ? (
+                                <>
+                                  <img src={img} draggable={false}
+                                   
+                                    className="w-full h-full object-cover pointer-events-none select-none" style={style.image} />
+                                  {/* Quick Actions Overlay */}
+                                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-50">
 
-                      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                        <div id="canvas" className="relative w-full h-full">
-                          {images.map((img, idx) => {
-                            const style = getRenderStyle(idx);
-                            return (
+                                    {/* NEW BUTTON: Edit Frame Properties */}
+                                    <button onClick={(e) => { e.stopPropagation(); openEditModal(idx, 'frame'); }}
+                                      className="p-1 bg-black/60 rounded text-white hover:bg-green-600 backdrop-blur-md"
+                                      title="Edit Frame Properties">
+                                      <Layout size={10} />
+                                    </button>
 
-                              <DraggableFrame key={idx} toolMode={toolMode} id={`frame-${idx}`} style={style.container}>
-                                <div className="group w-full h-full overflow-hidden relative shadow-xl hover:shadow-indigo-500/20 transition-shadow">
-                                  {img ? (
-                                    toolMode === 'content' ? (
-                                      <DraggableImage id={`image-${idx}`} style={style.image} toolMode={toolMode} src={img} />
-                                    ) : (
-                                      <>
-                                        <img
-                                          src={img}
-                                          draggable={false}
-                                          className="w-full h-full object-cover pointer-events-none" 
-                                          style={style.image}
-                                        />
+                                    {/* ORIGINAL BUTTON: Edit Content Properties */}
+                                    <button onClick={(e) => { e.stopPropagation(); openEditModal(idx, 'content'); }}
+                                      className="p-1 bg-black/60 rounded text-white hover:bg-indigo-600 backdrop-blur-md"
+                                      title="Edit Image Content Properties">
+                                      <Maximize2 size={10} />
+                                    </button>
 
-                                        {/* Quick Actions Overlay */}
-                                        <div
-                                          className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-auto"
-                                          // Important for dnd-kit: prevent drag start
-                                          onPointerDown={(e) => e.stopPropagation()}
-                                          onMouseDown={(e) => e.stopPropagation()}
-                                        >
-                                          {/* NEW BUTTON: Edit Frame Properties */}
-                                          <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); openEditModal(idx, 'frame'); }}
-                                            className="p-1 bg-black/60 rounded text-white hover:bg-green-600 backdrop-blur-md"
-                                            title="Edit Frame Properties"
-                                          >
-                                            <Layout size={10} />
-                                          </button>
-
-                                          {/* ORIGINAL BUTTON: Edit Content Properties */}
-                                          <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); openEditModal(idx, 'content'); }}
-                                            className="p-1 bg-black/60 rounded text-white hover:bg-indigo-600 backdrop-blur-md"
-                                            title="Edit Image Content Properties"
-                                          >
-                                            <Maximize2 size={10} />
-                                          </button>
-
-                                          {/* Upload control: keep label here only */}
-                                          <label
-                                            className="p-1 bg-black/60 rounded text-white hover:bg-zinc-700 backdrop-blur-md cursor-pointer"
-                                            onClick={(e) => e.stopPropagation()}
-                                            onPointerDown={(e) => e.stopPropagation()} // prevent drag start
-                                            onMouseDown={(e) => e.stopPropagation()}
-                                          >
-                                            <RefreshCw size={10} />
-                                            <input
-                                              type="file"
-                                              accept="image/*"
-                                              className="hidden"
-                                              onChange={(e) => handleSingleImageUpload(idx, e)}
-                                            />
-                                          </label>
-                                        </div>
-                                      </>
-                                    )
-                                  ) : (
-                                    <div className="w-full h-full bg-zinc-800/50 flex items-center justify-center border-2 border-dashed border-zinc-700">
-                                      <span className="text-[10px] text-zinc-500">Empty Frame</span>
-                                    </div>
-                                  )}
+                                    <label className="p-1 bg-black/60 rounded text-white hover:bg-zinc-700 backdrop-blur-md cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                                      <RefreshCw size={10} />
+                                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleSingleImageUpload(idx, e)} />
+                                    </label>
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="w-full h-full bg-zinc-800/50 flex items-center justify-center border-2 border-dashed border-zinc-700">
+                                  <span className="text-[10px] text-zinc-500">Empty Frame</span>
                                 </div>
-                              </DraggableFrame>
-
-                            );
-                          })}
-                        </div>
-                      </DndContext>
-
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
@@ -1322,7 +1297,7 @@ const getRenderStyle = (index) => {
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-950">
               <h3 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
-                <Settings2 size={16} /> { }
+                <Settings2 size={16} /> Image Adjustments
               </h3>
               <button onClick={() => setEditModalOpen(false)} className="text-zinc-500 hover:text-white"><X size={18} /></button>
             </div>
@@ -1331,7 +1306,7 @@ const getRenderStyle = (index) => {
               {/* Controls */}
               <div className="space-y-4">
                 <div>
-                  <label className="text-[10px] uppercase text-zinc-500 font-bold mb-2  flex justify-between">
+                  <label className="text-[10px] uppercase text-zinc-500 font-bold mb-2 block flex justify-between">
                     <span>Scale</span> <span>{tempTransform.scale?.toFixed(1)}x</span>
                   </label>
                   <div className="flex items-center gap-3">
@@ -1344,7 +1319,7 @@ const getRenderStyle = (index) => {
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase text-zinc-500 font-bold mb-2 flex justify-between">
+                  <label className="text-[10px] uppercase text-zinc-500 font-bold mb-2 block flex justify-between">
                     <span>Rotation</span> <span>{tempTransform.rotate || 0}°</span>
                   </label>
                   <div className="flex items-center gap-3">
@@ -1395,14 +1370,7 @@ const getRenderStyle = (index) => {
         </div>
       )}
 
-
-      <div>
-        <MovingFrame />
-      </div>
-
     </div>
-
-
   );
 };
 

@@ -11,3 +11,9 @@
   text-align: center;
 }
 
+
+button {
+  touch-action: none;
+}
+
+
